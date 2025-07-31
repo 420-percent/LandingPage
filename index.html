@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terpene Database - Polygon dApp</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.8.0/web3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gridjs/6.0.6/gridjs.umd.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/gridjs/6.0.6/theme/mermaid.min.css" rel="stylesheet" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .wallet-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .wallet-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .connect-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .connect-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .connect-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .network-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #e74c3c;
+        }
+
+        .status-dot.connected {
+            background: #27ae60;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 5px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            background: transparent;
+            color: white;
+            cursor: pointer;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .tab-content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            min-height: 400px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e1e1;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(45deg, #95a5a6, #7f8c8d);
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .grid-container {
+            margin-top: 20px;
+        }
+
+        .message-form {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .messages-grid {
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .wallet-info {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .tabs {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌿 Terpene Database</h1>
+            <p>Decentralized Terpene Information System on Polygon</p>
+        </div>
+
+        <div class="wallet-section">
+            <div class="wallet-info">
+                <div class="network-status">
+                    <span class="status-dot" id="networkDot"></span>
+                    <span id="networkStatus">Not Connected</span>
+                </div>
+                <div id="walletAddress"></div>
+                <button class="connect-btn" id="connectWallet">Connect Wallet</button>
+            </div>
+        </div>
+
+        <div id="alertContainer"></div>
+
+        <div class="tabs">
+            <button class="tab active" data-tab="browse">Browse Terpenes</button>
+            <button class="tab" data-tab="create">Create Terpene</button>
+            <button class="tab" data-tab="edit">Edit Terpene</button>
+            <button class="tab" data-tab="messages">Messages</button>
+        </div>
+
+        <div class="tab-content">
+            <!-- Browse Tab -->
+            <div id="browseTab" class="tab-panel active">
+                <h3>Terpene Database</h3>
+                <div class="grid-container">
+                    <div id="terpeneGrid"></div>
+                </div>
+            </div>
+
+            <!-- Create Tab -->
+            <div id="createTab" class="tab-panel" style="display: none;">
+                <h3>Create New Terpene</h3>
+                <form id="createForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="createName">Name</label>
+                            <input type="text" id="createName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="createEffect">Effect</label>
+                            <input type="text" id="createEffect" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="createFlavor">Flavor</label>
+                            <input type="text" id="createFlavor" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="createMed">Medical Properties</label>
+                            <input type="text" id="createMed" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="createKeys">Key Characteristics</label>
+                        <input type="text" id="createKeys" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="createDescription">Description</label>
+                        <textarea id="createDescription" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="createStrains">Associated Strains</label>
+                        <textarea id="createStrains" required></textarea>
+                    </div>
+                    <button type="submit" class="btn">Create Terpene</button>
+                </form>
+            </div>
+
+            <!-- Edit Tab -->
+            <div id="editTab" class="tab-panel" style="display: none;">
+                <h3>Edit Terpene</h3>
+                <div class="form-group">
+                    <label for="editId">Terpene ID</label>
+                    <input type="number" id="editId" placeholder="Enter terpene ID to edit">
+                    <button type="button" class="btn btn-secondary" id="loadTerpene" style="margin-top: 10px;">Load Terpene</button>
+                </div>
+                <form id="editForm" style="display: none;">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editName">Name</label>
+                            <input type="text" id="editName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editEffect">Effect</label>
+                            <input type="text" id="editEffect" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editFlavor">Flavor</label>
+                            <input type="text" id="editFlavor" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editMed">Medical Properties</label>
+                            <input type="text" id="editMed" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="editKeys">Key Characteristics</label>
+                        <input type="text" id="editKeys" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editDescription">Description</label>
+                        <textarea id="editDescription" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="editStrains">Associated Strains</label>
+                        <textarea id="editStrains" required></textarea>
+                    </div>
+                    <button type="submit" class="btn">Update Terpene</button>
+                </form>
+            </div>
+
+            <!-- Messages Tab -->
+            <div id="messagesTab" class="tab-panel" style="display: none;">
+                <h3>Update Requests & Messages</h3>
+                
+                <div class="message-form">
+                    <h4>Request Terpene Update</h4>
+                    <form id="messageForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="msgTerpId">Terpene ID</label>
+                                <input type="number" id="msgTerpId" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="msgContent">Update Request</label>
+                                <textarea id="msgContent" placeholder="Describe the changes you'd like to see..." required></textarea>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn">Submit Request</button>
+                    </form>
+                </div>
+
+                <div class="messages-grid">
+                    <div id="messagesGrid"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Contract configuration
+        const CONTRACT_ADDRESS = '0x9fD304574A978E3185cC89B96B3C460121fB9465';
+        const CONTRACT_ABI = [{"inputs":[],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"id","type":"uint256"},{"indexed":false,"internalType":"string","name":"message","type":"string"},{"indexed":false,"internalType":"uint256","name":"time","type":"uint256"},{"indexed":false,"internalType":"address","name":"sender","type":"address"}],"name":"NewMsg","type":"event"},{"inputs":[{"internalType":"string","name":"_name","type":"string"},{"internalType":"string","name":"_effect","type":"string"},{"internalType":"string","name":"_flavor","type":"string"},{"internalType":"string","name":"_med","type":"string"},{"internalType":"string","name":"_keys","type":"string"},{"internalType":"string","name":"_description","type":"string"},{"internalType":"string","name":"_strains","type":"string"}],"name":"createTerp","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"_id","type":"uint256"},{"internalType":"string","name":"_name","type":"string"},{"internalType":"string","name":"_effect","type":"string"},{"internalType":"string","name":"_flavor","type":"string"},{"internalType":"string","name":"_med","type":"string"},{"internalType":"string","name":"_keys","type":"string"},{"internalType":"string","name":"_description","type":"string"},{"internalType":"string","name":"_strains","type":"string"}],"name":"editTerp","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"msgs","outputs":[{"internalType":"uint256","name":"id","type":"uint256"},{"internalType":"uint256","name":"terpID","type":"uint256"},{"internalType":"address","name":"sender","type":"address"},{"internalType":"string","name":"message","type":"string"},{"internalType":"uint256","name":"time","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"_id","type":"uint256"},{"internalType":"string","name":"_message","type":"string"}],"name":"requestTerpUpdate","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"terps","outputs":[{"internalType":"uint256","name":"id","type":"uint256"},{"internalType":"string","name":"name","type":"string"},{"internalType":"string","name":"effect","type":"string"},{"internalType":"string","name":"flavor","type":"string"},{"internalType":"string","name":"med","type":"string"},{"internalType":"string","name":"keys","type":"string"},{"internalType":"string","name":"description","type":"string"},{"internalType":"string","name":"strains","type":"string"}],"stateMutability":"view","type":"function"}];
+        
+        // Global variables
+        let web3;
+        let contract;
+        let userAccount;
+        let terpeneGrid;
+        let messagesGrid;
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+            setupEventListeners();
+        });
+
+        function initializeApp() {
+            // Check if MetaMask is installed
+            if (typeof window.ethereum !== 'undefined') {
+                web3 = new Web3(window.ethereum);
+                contract = new web3.eth.Contract(CONTRACT_ABI, CONTRACT_ADDRESS);
+            } else {
+                showAlert('MetaMask is not installed. Please install MetaMask to use this dApp.', 'error');
+            }
+
+            // Initialize grids
+            initializeTerpeneGrid();
+            initializeMessagesGrid();
+        }
+
+        function setupEventListeners() {
+            // Wallet connection
+            document.getElementById('connectWallet').addEventListener('click', connectWallet);
+
+            // Tab switching
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+            });
+
+            // Forms
+            document.getElementById('createForm').addEventListener('submit', handleCreateTerpene);
+            document.getElementById('editForm').addEventListener('submit', handleEditTerpene);
+            document.getElementById('messageForm').addEventListener('submit', handleSendMessage);
+            document.getElementById('loadTerpene').addEventListener('click', loadTerpeneForEdit);
+
+            // Account changes
+            if (window.ethereum) {
+                window.ethereum.on('accountsChanged', handleAccountsChanged);
+                window.ethereum.on('chainChanged', handleChainChanged);
+            }
+        }
+
+        async function connectWallet() {
+            try {
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                userAccount = accounts[0];
+                
+                // Check if we're on Polygon
+                const chainId = await web3.eth.getChainId();
+                if (chainId !== 137) {
+                    await switchToPolygon();
+                }
+                
+                updateWalletUI();
+                showAlert('Wallet connected successfully!', 'success');
+                loadTerpeneData();
+            } catch (error) {
+                console.error('Error connecting wallet:', error);
+                showAlert('Failed to connect wallet: ' + error.message, 'error');
+            }
+        }
+
+        async function switchToPolygon() {
+            try {
+                await window.ethereum.request({
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId: '0x89' }], // Polygon Mainnet
+                });
+            } catch (switchError) {
+                if (switchError.code === 4902) {
+                    // Chain not added, add it
+                    await window.ethereum.request({
+                        method: 'wallet_addEthereumChain',
+                        params: [{
+                            chainId: '0x89',
+                            chainName: 'Polygon Mainnet',
+                            nativeCurrency: {
+                                name: 'MATIC',
+                                symbol: 'MATIC',
+                                decimals: 18
+                            },
+                            rpcUrls: ['https://polygon-rpc.com/'],
+                            blockExplorerUrls: ['https://polygonscan.com/']
+                        }]
+                    });
+                }
+            }
+        }
+
+        function updateWalletUI() {
+            const connectBtn = document.getElementById('connectWallet');
+            const walletAddress = document.getElementById('walletAddress');
+            const networkStatus = document.getElementById('networkStatus');
+            const networkDot = document.getElementById('networkDot');
+
+            if (userAccount) {
+                connectBtn.textContent = 'Connected';
+                connectBtn.disabled = true;
+                walletAddress.textContent = `${userAccount.substring(0, 6)}...${userAccount.substring(38)}`;
+                networkStatus.textContent = 'Polygon Network';
+                networkDot.classList.add('connected');
+            } else {
+                connectBtn.textContent = 'Connect Wallet';
+                connectBtn.disabled = false;
+                walletAddress.textContent = '';
+                networkStatus.textContent = 'Not Connected';
+                networkDot.classList.remove('connected');
+            }
+        }
+
+        function handleAccountsChanged(accounts) {
+            if (accounts.length === 0) {
+                userAccount = null;
+                updateWalletUI();
+                showAlert('Wallet disconnected', 'info');
+            } else {
+                userAccount = accounts[0];
+                updateWalletUI();
+                loadTerpeneData();
+            }
+        }
+
+        function handleChainChanged(chainId) {
+            window.location.reload();
+        }
+
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+
+            // Update tab content
+            document.querySelectorAll('.tab-panel').forEach(panel => {
+                panel.style.display = 'none';
+            });
+            document.getElementById(`${tabName}Tab`).style.display = 'block';
+
+            // Load data for specific tabs
+            if (tabName === 'browse') {
+                loadTerpeneData();
+            } else if (tabName === 'messages') {
+                loadMessagesData();
+            }
+        }
+
+        function initializeTerpeneGrid() {
+            terpeneGrid = new gridjs.Grid({
+                columns: [
+                    'ID',
+                    'Name',
+                    { name: 'Effect', width: '150px' },
+                    { name: 'Flavor', width: '150px' },
+                    { name: 'Medical', width: '150px' },
+                    { name: 'Description', width: '200px' }
+                ],
+                data: [],
+                pagination: {
+                    limit: 10
+                },
+                search: true,
+                sort: true,
+                resizable: true,
+                style: {
+                    table: {
+                        border: '3px solid #ccc'
+                    },
+                    th: {
+                        'background-color': 'rgba(102, 126, 234, 0.1)',
+                        color: '#333',
+                        'border-bottom': '3px solid #ccc',
+                        'text-align': 'center'
+                    },
+                    td: {
+                        'text-align': 'center',
+                        'border': '1px solid #ccc'
+                    }
+                }
+            }).render(document.getElementById('terpeneGrid'));
+        }
+
+        function initializeMessagesGrid() {
+            messagesGrid = new gridjs.Grid({
+                columns: [
+                    'ID',
+                    'Terpene ID',
+                    { name: 'Sender', width: '120px' },
+                    { name: 'Message', width: '300px' },
+                    { name: 'Time', width: '150px' }
+                ],
+                data: [],
+                pagination: {
+                    limit: 10
+                },
+                search: true,
+                sort: true,
+                style: {
+                    table: {
+                        border: '3px solid #ccc'
+                    },
+                    th: {
+                        'background-color': 'rgba(102, 126, 234, 0.1)',
+                        color: '#333',
+                        'border-bottom': '3px solid #ccc',
+                        'text-align': 'center'
+                    },
+                    td: {
+                        'text-align': 'left',
+                        'border': '1px solid #ccc'
+                    }
+                }
+            }).render(document.getElementById('messagesGrid'));
+        }
+
+        async function loadTerpeneData() {
+            if (!contract) return;
+            
+            try {
+                const data = [];
+                let id = 1;
+                
+                // Try to load terpenes until we hit an empty one
+                while (true) {
+                    try {
+                        const terpene = await contract.methods.terps(id).call();
+                        if (terpene.name === '') break;
+                        
+                        data.push([
+                            terpene.id,
+                            terpene.name,
+                            terpene.effect,
+                            terpene.flavor,
+                            terpene.med,
+                            terpene.description.substring(0, 100) + (terpene.description.length > 100 ? '...' : '')
+                        ]);
+                        id++;
+                    } catch (error) {
+                        break;
+                    }
+                }
+                
+                terpeneGrid.updateConfig({
+                    data: data
+                }).forceRender();
+                
+            } catch (error) {
+                console.error('Error loading terpene data:', error);
+                showAlert('Error loading terpene data: ' + error.message, 'error');
+            }
+        }
+
+        async function loadMessagesData() {
+            if (!contract) return;
+            
+            try {
+                const data = [];
+                let id = 1;
+                
+                // Try to load messages until we hit an empty one
+                while (true) {
+                    try {
+                        const message = await contract.methods.msgs(id).call();
+                        if (message.message === '') break;
+                        
+                        const date = new Date(message.time * 1000);
+                        data.push([
+                            message.id,
+                            message.terpID,
+                            `${message.sender.substring(0, 6)}...${message.sender.substring(38)}`,
+                            message.message,
+                            date.toLocaleDateString() + ' ' + date.toLocaleTimeString()
+                        ]);
+                        id++;
+                    } catch (error) {
+                        break;
+                    }
+                }
+                
+                messagesGrid.updateConfig({
+                    data: data
+                }).forceRender();
+                
+            } catch (error) {
+                console.error('Error loading messages data:', error);
+                showAlert('Error loading messages data: ' + error.message, 'error');
+            }
+        }
+
+        async function handleCreateTerpene(event) {
+            event.preventDefault();
+            
+            if (!userAccount) {
+                showAlert('Please connect your wallet first', 'error');
+                return;
+            }
+
+            const formData = new FormData(event.target);
+            const submitBtn = event.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            
+            try {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<div class="loading"></div> Creating...';
+
+                const tx = await contract.methods.createTerp(
+                    document.getElementById('createName').value,
+                    document.getElementById('createEffect').value,
+                    document.getElementById('createFlavor').value,
+                    document.getElementById('createMed').value,
+                    document.getElementById('createKeys').value,
+                    document.getElementById('createDescription').value,
+                    document.getElementById('createStrains').value
+                ).send({ from: userAccount });
+
+                showAlert('Terpene created successfully! Transaction: ' + tx.transactionHash, 'success');
+                event.target.reset();
+                loadTerpeneData();
+                
+            } catch (error) {
+                console.error('Error creating terpene:', error);
+                showAlert('Error creating terpene: ' + error.message, 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        }
+
+        async function loadTerpeneForEdit() {
+            const id = document.getElementById('editId').value;
+            if (!id) {
+                showAlert('Please enter a terpene ID', 'error');
+                return;
+            }
+
+            try {
+                const terpene = await contract.methods.terps(id).call();
+                if (terpene.name === '') {
+                    showAlert('Terpene not found', 'error');
+                    return;
+                }
+
+                // Populate form
+                document.getElementById('editName').value = terpene.name;
+                document.getElementById('editEffect').value = terpene.effect;
+                document.getElementById('editFlavor').value = terpene.flavor;
+                document.getElementById('editMed').value = terpene.med;
+                document.getElementById('editKeys').value = terpene.keys;
+                document.getElementById('editDescription').value = terpene.description;
+                document.getElementById('editStrains').value = terpene.strains;
+
+                document.getElementById('editForm').style.display = 'block';
+                showAlert('Terpene loaded successfully', 'success');
+
+            } catch (error) {
+                console.error('Error loading terpene:', error);
+                showAlert('Error loading terpene: ' + error.message, 'error');
+            }
+        }
+
+        async function handleEditTerpene(event) {
+            event.preventDefault();
+            
+            if (!userAccount) {
+                showAlert('Please connect your wallet first', 'error');
+                return;
+            }
+
+            const id = document.getElementById('editId').value;
+            const submitBtn = event.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            
+            try {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<div class="loading"></div> Updating
